@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>성경 이야기 교재</title>
+<meta name="description" content="성경 66권 512편 이야기를 실감 나는 시뮬레이션으로 배우는 교회학교 교재">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f1e7;--paper:#fffdf8;--ink:#2a251d;--muted:#7a7061;--line:#e6dccb;
+  --accent:#a8741a;--accent-soft:#f5e7c8;--ot:#8a5a2b;--nt:#2f6d9e;--chip:#efe7d8;
+  --shadow:0 6px 20px rgba(60,40,10,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;
+  --accent:#e2b457;--accent-soft:#3a2f1b;--ot:#d9a06a;--nt:#6fa9df;--chip:#28251f;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;
+  --accent:#e2b457;--accent-soft:#3a2f1b;--ot:#d9a06a;--nt:#6fa9df;--chip:#28251f;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{padding:28px 0 8px}
+header h1{font-family:"Gowun Batang",serif;font-size:clamp(26px,4vw,36px);margin:0 0 4px;letter-spacing:-.5px}
+header p{margin:0;color:var(--muted)}
+body.embed header{display:none}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row+.row{margin-top:8px}
+input[type=search],select{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:40px}
+input[type=search]{flex:1 1 240px}
+select{flex:0 1 auto;max-width:100%}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
+.seg button{font:inherit;border:0;background:none;color:var(--muted);padding:8px 14px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:700}
+.chip{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:700}
+.count{margin-left:auto;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:18px 0 40px}
+.card{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
+.card:hover,.card:focus-visible{transform:translateY(-2px);border-color:var(--accent);outline:none}
+.meta{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.no{font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums}
+.tag{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--chip)}
+.tag.ot{color:var(--ot)}.tag.nt{color:var(--nt)}
+.card h3{font-family:"Gowun Batang",serif;font-size:18px;margin:0;line-height:1.35}
+.card p{margin:0;font-size:14px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.group{grid-column:1/-1;font-family:"Gowun Batang",serif;font-size:20px;font-weight:700;margin:10px 0 -4px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+.group small{font-family:"Noto Sans KR";font-size:13px;color:var(--muted);font-weight:400;margin-left:6px}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0}
+@media (max-width:560px){.count{margin-left:0;width:100%}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <h1>성경 이야기 교재</h1>
+  <p>성경 66권 · 512편의 이야기를 시뮬레이션으로 만나 보세요</p>
+</header>
+<div class="bar"><div class="wrap">
+  <div class="row">
+    <input type="search" id="q" placeholder="번호, 제목, 인물, 성경책으로 찾기 (예: 94, 다윗, 요나)" aria-label="검색">
+    <div class="seg" role="group" aria-label="구약/신약">
+      <button type="button" data-t="" aria-pressed="true">전체</button>
+      <button type="button" data-t="구약" aria-pressed="false">구약</button>
+      <button type="button" data-t="신약" aria-pressed="false">신약</button>
+    </div>
+  </div>
+  <div class="row">
+    <select id="book" aria-label="성경책"><option value="">성경책 전체</option></select>
+    <select id="theme" aria-label="주제"><option value="">주제 전체</option></select>
+    <select id="sort" aria-label="정렬">
+      <option value="no">번호 순</option>
+      <option value="bible">성경 순서 (책별 묶기)</option>
+    </select>
+    <span class="chip-wrap row" style="gap:6px">
+      <button type="button" class="chip" data-a="어린이" aria-pressed="false">어린이</button>
+      <button type="button" class="chip" data-a="청소년" aria-pressed="false">청소년</button>
+      <button type="button" class="chip" data-a="성인" aria-pressed="false">성인</button>
+    </span>
+    <span class="count" id="count"></span>
+  </div>
+</div></div>
+<main class="wrap"><div class="grid" id="grid"></div></main>
+<script>
+const DATA = /*__CATALOG__*/[];
+const P = new URLSearchParams(location.search);
+if (P.get('embed') === '1') document.body.classList.add('embed');
+if (P.get('theme')) document.documentElement.dataset.theme = P.get('theme');
+const st = { q: P.get('q') || '', t: P.get('t') || '', book: P.get('book') || '', theme: '', aud: new Set(), sort: 'no' };
+const $ = s => document.querySelector(s);
+const books = [...new Map(DATA.map(d => [d.book, d.book_order])).entries()].sort((a, b) => a[1] - b[1]);
+books.forEach(([b]) => $('#book').insertAdjacentHTML('beforeend', `<option>${b}</option>`));
+[...new Set(DATA.flatMap(d => d.themes))].sort().forEach(t => $('#theme').insertAdjacentHTML('beforeend', `<option>${t}</option>`));
+$('#q').value = st.q; $('#book').value = st.book;
+document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === st.t));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pad = n => String(n).padStart(3, '0');
+function match(d) {
+  if (st.t && d.testament !== st.t) return false;
+  if (st.book && d.book !== st.book) return false;
+  if (st.theme && !d.themes.includes(st.theme)) return false;
+  for (const a of st.aud) if (!d.audience.includes(a)) return false;
+  const q = st.q.trim().replace(/\s+/g, '');
+  if (!q) return true;
+  if (/^\d+$/.test(q)) return String(d.no) === String(+q) || pad(d.no).includes(q);
+  return (d.title + d.book + d.ref + d.summary + d.themes.join('')).replace(/\s+/g, '').includes(q);
+}
+function card(d) {
+  const e = P.get('embed') === '1' ? '&embed=1' : '';
+  return `<a class="card" href="view?n=${d.no}${e}">
+    <div class="meta"><span class="no">#${pad(d.no)}</span><span class="tag ${d.testament === '구약' ? 'ot' : 'nt'}">${d.testament}</span><span>${esc(d.book)} · ${esc(d.ref)}</span></div>
+    <h3>${esc(d.title)}</h3><p>${esc(d.summary)}</p></a>`;
+}
+function render() {
+  let list = DATA.filter(match);
+  if (st.sort === 'bible') list.sort((a, b) => a.book_order - b.book_order || a.no - b.no); else list.sort((a, b) => a.no - b.no);
+  let html = '', last = '';
+  for (const d of list) {
+    if (st.sort === 'bible' && d.book !== last) { last = d.book; html += `<div class="group">${esc(d.book)}<small>${list.filter(x => x.book === d.book).length}편</small></div>`; }
+    html += card(d);
+  }
+  $('#grid').innerHTML = html || '<div class="empty">조건에 맞는 이야기가 없습니다.</div>';
+  $('#count').textContent = `${list.length} / ${DATA.length}편`;
+}
+$('#q').addEventListener('input', e => { st.q = e.target.value; render(); });
+$('#book').addEventListener('change', e => { st.book = e.target.value; render(); });
+$('#theme').addEventListener('change', e => { st.theme = e.target.value; render(); });
+$('#sort').addEventListener('change', e => { st.sort = e.target.value; render(); });
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  st.t = b.dataset.t; document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b)); render();
+}));
+document.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+  const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on);
+  on ? st.aud.add(b.dataset.a) : st.aud.delete(b.dataset.a); render();
+}));
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>천지창조 · 7일 시뮬레이션</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f1e8;--paper:#fffdf8;--ink:#25211a;--muted:#6d6558;--line:#e4dccb;
+  --accent:#b07d22;--accent-soft:#f3e6c8;--blue:#2d6ea6;--ok:#2e8554;--ok-soft:#dcefe3;--bad:#b9443a;--bad-soft:#f6dedb;--chip:#efe8d8;
+  --shadow:0 10px 30px rgba(60,45,20,.10);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;
+  --accent:#e2b457;--accent-soft:#3a2f1b;--blue:#6fa9df;--ok:#5cc189;--ok-soft:#1d3327;--bad:#e27a70;--bad-soft:#3b2220;--chip:#28251f;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;
+  --accent:#e2b457;--accent-soft:#3a2f1b;--blue:#6fa9df;--ok:#5cc189;--ok-soft:#1d3327;--bad:#e27a70;--bad-soft:#3b2220;--chip:#28251f;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+h1,h2,h3{font-family:"Gowun Batang",serif;line-height:1.3;margin:0}
+button{font:inherit;cursor:pointer}
+
+/* hero */
+.hero{padding:40px 0 22px}
+.eyebrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.tag{background:var(--chip);border-radius:999px;padding:3px 11px;font-weight:500}
+.tag.gold{background:var(--accent-soft);color:var(--accent)}
+.hero h1{font-size:clamp(34px,6vw,56px);margin:10px 0 6px;letter-spacing:-.5px}
+.hero .lead{font-size:17px;color:var(--muted);max-width:760px;margin:0}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px}
+.nav a{font-size:13px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--paper);padding:6px 12px;border-radius:999px}
+.nav a:hover{border-color:var(--accent);color:var(--accent)}
+
+section{margin:34px 0}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.sec-head .num{font-family:"Gowun Batang",serif;color:var(--accent);font-weight:700;font-size:15px}
+.sec-head h2{font-size:26px}
+.sec-head p{margin:0;color:var(--muted);font-size:14px;flex-basis:100%}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+
+/* simulation */
+.sim{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px}
+.stage-card{padding:10px}
+.stage{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/10}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.day-label{position:absolute;left:16px;top:12px;color:#fff;font-family:"Gowun Batang",serif;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
+.day-label .n{font-size:clamp(22px,3.4vw,34px);font-weight:700;display:block}
+.day-label .s{font-size:13px;opacity:.85;font-family:"Noto Sans KR",sans-serif}
+.decree{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);color:#fff;font-family:"Gowun Batang",serif;font-weight:700;
+  font-size:clamp(20px,3.6vw,38px);text-align:center;width:90%;text-shadow:0 0 24px rgba(255,230,160,.9),0 2px 8px rgba(0,0,0,.7);opacity:0;pointer-events:none}
+.decree.show{animation:decree 3.6s ease forwards}
+@keyframes decree{0%{opacity:0;transform:translate(-50%,-40%) scale(.96);letter-spacing:6px}18%{opacity:1;transform:translate(-50%,-50%) scale(1);letter-spacing:1px}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-56%)}}
+.hint{position:absolute;right:12px;bottom:10px;color:#fff;font-size:12px;background:rgba(0,0,0,.38);padding:4px 10px;border-radius:999px;opacity:0;transition:opacity .5s;pointer-events:none}
+.hint.show{opacity:1}
+
+.controls{display:flex;align-items:center;gap:8px;padding:12px 4px 4px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07);color:#fff}
+.btn.on{background:#1f2a48;color:#fff;border-color:#1f2a48}
+.spacer{flex:1}
+.days{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding:8px 4px 4px}
+.dbtn{border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:10px;padding:7px 2px;font-size:12px;line-height:1.25;text-align:center}
+.dbtn b{display:block;font-size:15px;color:var(--ink);font-family:"Gowun Batang",serif}
+.dbtn.done{background:var(--accent-soft)}
+.dbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.dbtn.active b{color:#fff}
+
+.panel{padding:22px;display:flex;flex-direction:column;gap:14px}
+.panel .ref{font-size:13px;color:var(--accent);font-weight:700}
+.panel h3{font-size:24px}
+.panel .story{font-size:16px;margin:0}
+.made{display:flex;gap:6px;flex-wrap:wrap}
+.made span{background:var(--chip);border-radius:8px;padding:4px 10px;font-size:14px}
+.good{font-family:"Gowun Batang",serif;color:var(--accent);font-weight:700;font-size:15px;border-left:3px solid var(--accent);padding-left:10px}
+.think{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:15px}
+.think b{display:block;font-size:12px;color:var(--accent);letter-spacing:.5px;margin-bottom:2px}
+details.tnote{border-top:1px dashed var(--line);padding-top:10px;font-size:14px;color:var(--muted)}
+details.tnote summary{cursor:pointer;font-weight:700;color:var(--ink)}
+
+/* structure */
+.frame{display:grid;grid-template-columns:1fr 60px 1fr;gap:10px;align-items:stretch;padding:20px}
+.frame .colh{font-weight:700;text-align:center;font-size:15px;color:var(--muted)}
+.frame .colh em{display:block;font-style:normal;font-family:"Gowun Batang",serif;color:var(--ink);font-size:19px}
+.fcell{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);text-align:left;color:var(--ink);transition:transform .15s,border-color .15s}
+.fcell:hover{transform:translateY(-2px);border-color:var(--accent)}
+.fcell .d{font-size:12px;color:var(--accent);font-weight:700}
+.fcell .w{font-size:17px;font-weight:700}
+.fcell .e{font-size:22px;float:right}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:22px}
+.frame-foot{grid-column:1/-1;text-align:center;border-radius:12px;padding:12px;background:var(--accent-soft);font-family:"Gowun Batang",serif;font-size:17px;border:none;color:var(--ink)}
+.frame-note{padding:0 20px 20px;margin:0;color:var(--muted);font-size:14px}
+
+/* match game */
+.game{padding:20px}
+.game-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.score{font-weight:700;color:var(--accent)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border:2px dashed var(--line);border-radius:14px;margin-bottom:14px}
+.item{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:15px;display:inline-flex;gap:6px;align-items:center;transition:transform .15s}
+.item .ic{font-size:20px}
+.item.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);transform:translateY(-2px)}
+.item.placed{background:var(--ok-soft);border-color:var(--ok);cursor:default;font-size:13px;padding:4px 8px}
+.item.placed .ic{font-size:16px}
+.slots{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.slot{border:1px solid var(--line);border-radius:12px;min-height:130px;padding:8px;background:var(--bg);display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:left;color:var(--ink)}
+.slot .sh{font-family:"Gowun Batang",serif;font-weight:700;text-align:center;font-size:15px}
+.slot.ready{border-color:var(--accent);background:var(--accent-soft)}
+.slot.wrong{animation:shake .4s;border-color:var(--bad);background:var(--bad-soft)}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.game-msg{margin-top:12px;min-height:26px;font-weight:500}
+
+/* quiz */
+.quiz{padding:20px;display:grid;gap:14px}
+.q{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg)}
+.q .qt{font-weight:700;margin-bottom:8px}
+.q .qt span{color:var(--accent);margin-right:6px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:15px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:700}
+.opt.wrongp{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.opt:disabled{cursor:default}
+.exp{font-size:14px;color:var(--muted);margin-top:8px;display:none}
+.exp.show{display:block}
+.quiz-score{font-weight:700;color:var(--accent);font-size:17px}
+
+/* share */
+.tabs{display:flex;gap:6px;padding:16px 20px 0;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:999px;padding:6px 16px;font-weight:500}
+.tab.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.qlist{padding:16px 20px 20px;margin:0;display:grid;gap:10px;list-style:none;counter-reset:q}
+.qlist li{counter-increment:q;background:var(--bg);border-radius:12px;padding:12px 14px 12px 46px;position:relative;font-size:16px}
+.qlist li::before{content:counter(q);position:absolute;left:14px;top:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* teacher */
+.tg{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.tg h3{font-size:18px;margin-bottom:8px}
+.tg table{width:100%;border-collapse:collapse;font-size:14px}
+.tg td{border-bottom:1px solid var(--line);padding:7px 4px;vertical-align:top}
+.tg td:first-child{white-space:nowrap;color:var(--accent);font-weight:700;width:86px}
+.verse{font-family:"Gowun Batang",serif;font-size:22px;background:var(--accent-soft);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px}
+.verse small{display:block;font-family:"Noto Sans KR";font-size:13px;color:var(--accent);margin-top:4px}
+.tg ul{margin:0;padding-left:18px;font-size:14px}
+.tg li{margin:4px 0}
+.msg{font-size:15px;border-left:3px solid var(--accent);padding-left:12px;margin:0 0 12px}
+
+footer{padding:26px 0 50px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:40px}
+.theme-toggle{position:fixed;right:14px;top:14px;z-index:5;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;width:38px;height:38px;font-size:16px}
+
+@media (max-width:900px){
+  .sim{grid-template-columns:1fr}
+  .slots{grid-template-columns:repeat(4,1fr)}
+  .tg{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .stage{aspect-ratio:4/3}
+  .days{grid-template-columns:repeat(4,1fr)}
+  .slots{grid-template-columns:repeat(2,1fr)}
+  .opts{grid-template-columns:1fr}
+  .frame{grid-template-columns:1fr 34px 1fr;padding:14px;gap:8px}
+  .fcell .e{display:none}
+  .hero{padding-top:28px}
+}
+@media print{
+  .theme-toggle,.nav,#sim,.controls,.days,#game .game-top button{display:none!important}
+  body{background:#fff;color:#000}
+  .card{box-shadow:none}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="밝게/어둡게">◐</button>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">
+      <span class="tag gold">성경 이야기 #1</span>
+      <span class="tag">구약 · 창세기</span>
+      <span class="tag">창 1:1–2:3</span>
+      <span class="tag">어린이 · 청소년 · 성인</span>
+    </div>
+    <h1>천지창조</h1>
+    <p class="lead">하나님이 말씀으로 빛과 하늘과 땅, 바다와 육지, 해와 달과 별, 동식물과 사람을 엿새 동안 창조하시고 일곱째 날에 안식하셨습니다. 아무것도 없던 어둠에서 시작해 한 날씩 세상이 채워지는 모습을 직접 눌러 보며 따라가 보세요.</p>
+    <nav class="nav">
+      <a href="#sim">① 7일 시뮬레이션</a>
+      <a href="#frame">② 창조의 짜임</a>
+      <a href="#game">③ 순서 맞추기</a>
+      <a href="#quiz">④ 퀴즈</a>
+      <a href="#share">⑤ 나눔</a>
+      <a href="#teacher">⑥ 교사 가이드</a>
+    </nav>
+  </header>
+
+  <!-- 1. SIMULATION -->
+  <section id="sim">
+    <div class="sec-head"><span class="num">01</span><h2>7일 창조 시뮬레이션</h2>
+      <p>‘다음 날’을 누르면 하나님의 말씀과 함께 그날 지으신 것이 화면에 나타납니다. 키보드 ← → 로도 넘길 수 있어요.</p></div>
+    <div class="sim">
+      <div class="card stage-card">
+        <div class="stage" id="stage">
+          <canvas id="cv" aria-label="천지창조 시뮬레이션 화면"></canvas>
+          <div class="day-label"><span class="n" id="lblN">태초</span><span class="s" id="lblS">혼돈과 공허, 깊은 어둠</span></div>
+          <div class="decree" id="decree"></div>
+          <div class="hint" id="hint"></div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="prev">◀ 이전</button>
+          <button class="btn primary" id="next">다음 날 ▶</button>
+          <button class="btn" id="play">▶ 자동 재생</button>
+          <span class="spacer"></span>
+          <button class="btn" id="night" disabled>☾ 밤으로</button>
+        </div>
+        <div class="days" id="days"></div>
+      </div>
+      <aside class="card panel" id="panel" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- 2. FRAME -->
+  <section id="frame">
+    <div class="sec-head"><span class="num">02</span><h2>창조의 짜임 — 틀을 만들고, 채우시다</h2>
+      <p>창세기 1장은 “혼돈하고 공허하다”는 두 가지 문제를 하나님이 차례로 해결하시는 구조입니다. 짝을 누르면 해당 날로 이동합니다.</p></div>
+    <div class="card">
+      <div class="frame" id="frameGrid">
+        <div class="colh">1–3일<em>공간을 나누심 (틀)</em></div><div></div><div class="colh">4–6일<em>그 공간을 채우심</em></div>
+      </div>
+      <p class="frame-note">‘혼돈’(모양 없음)은 첫 사흘 동안 <b>나누심</b>으로, ‘공허’(비어 있음)는 다음 사흘 동안 <b>채우심</b>으로 해결됩니다. 하나님은 무질서가 아니라 질서와 목적을 가지고 세상을 지으셨습니다.</p>
+    </div>
+  </section>
+
+  <!-- 3. GAME -->
+  <section id="game">
+    <div class="sec-head"><span class="num">03</span><h2>활동 — 무엇을 몇째 날에 만드셨을까?</h2>
+      <p>아래 카드를 하나 누른 뒤, 알맞은 날 칸을 누르세요. 틀리면 칸이 흔들려요.</p></div>
+    <div class="card game">
+      <div class="game-top">
+        <span class="score" id="gScore">0 / 0</span>
+        <span class="spacer"></span>
+        <button class="btn" id="gAnswer">정답 보기</button>
+        <button class="btn" id="gReset">다시 하기</button>
+      </div>
+      <div class="pool" id="pool"></div>
+      <div class="slots" id="slots"></div>
+      <div class="game-msg" id="gMsg"></div>
+    </div>
+  </section>
+
+  <!-- 4. QUIZ -->
+  <section id="quiz">
+    <div class="sec-head"><span class="num">04</span><h2>확인 퀴즈</h2>
+      <p>답을 고르면 바로 해설이 나옵니다.</p></div>
+    <div class="card quiz" id="quizBox"></div>
+  </section>
+
+  <!-- 5. SHARE -->
+  <section id="share">
+    <div class="sec-head"><span class="num">05</span><h2>생각과 나눔</h2>
+      <p>대상에 맞는 질문을 골라 쓰세요.</p></div>
+    <div class="card">
+      <div class="tabs" id="tabs"></div>
+      <ol class="qlist" id="qlist"></ol>
+    </div>
+  </section>
+
+  <!-- 6. TEACHER -->
+  <section id="teacher">
+    <div class="sec-head"><span class="num">06</span><h2>교사 가이드</h2>
+      <p>40분 수업 기준 흐름입니다. 인쇄하면 시뮬레이션은 빠지고 활동지와 가이드만 출력됩니다.</p></div>
+    <div class="card tg">
+      <div>
+        <div class="verse">태초에 하나님이 천지를 창조하시니라<small>암송 구절 · 창세기 1:1</small></div>
+        <h3>핵심 메시지</h3>
+        <p class="msg">세상 모든 것은 하나님의 창조 질서 안에 있으며, 안식은 창조의 완성이자 선물입니다.</p>
+        <h3>가르칠 때 기억할 점</h3>
+        <ul>
+          <li>과학 논쟁보다 <b>“누가, 왜”</b> 창조하셨는지에 초점을 두세요.</li>
+          <li>반복되는 문장 틀(말씀하시니 → 그대로 되니 → 보시기에 좋았더라 → 저녁이 되고 아침이 되니)을 함께 소리 내어 읽으면 어린이도 구조를 쉽게 익힙니다.</li>
+          <li>둘째 날에는 “좋았더라”가 없고, 셋째 날에는 두 번, 여섯째 날에는 “심히 좋았더라”가 나옵니다. 청소년·성인반에서 이유를 함께 찾아보세요.</li>
+          <li>사람만 “하나님의 형상대로” 지어졌다는 점을 자존감·이웃 존중과 연결해 적용하세요.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>수업 흐름 (40분)</h3>
+        <table>
+          <tr><td>도입 5분</td><td>불을 끄고 화면의 ‘태초’ 장면을 보여 줍니다. “아무것도 없고 깜깜하면 어떤 느낌일까?”</td></tr>
+          <tr><td>전개 12분</td><td>시뮬레이션으로 하루씩 넘기며 창세기 1장을 함께 읽습니다. 날마다 ‘생각해 보기’ 질문을 하나씩 던집니다.</td></tr>
+          <tr><td>구조 5분</td><td>‘창조의 짜임’ 표로 1↔4, 2↔5, 3↔6일의 짝을 확인합니다.</td></tr>
+          <tr><td>활동 8분</td><td>순서 맞추기 게임을 모둠별로 진행합니다. (저학년은 교사가 카드를 읽어 줌)</td></tr>
+          <tr><td>확인 4분</td><td>퀴즈 6문항을 함께 풉니다.</td></tr>
+          <tr><td>나눔 6분</td><td>대상별 질문 2개를 골라 나눈 뒤, 창조주 하나님께 감사하는 기도로 마칩니다.</td></tr>
+        </table>
+        <h3 style="margin-top:16px">준비물</h3>
+        <ul>
+          <li>이 화면을 띄울 TV 또는 빔 프로젝터 (인터넷 없이도 작동)</li>
+          <li>성경 (창세기 1:1–2:3)</li>
+          <li>선택: 색연필과 A4 — ‘내가 가장 좋아하는 창조물’ 그리기</li>
+        </ul>
+        <p style="margin-top:14px"><button class="btn" onclick="window.print()">🖨 활동지·가이드 인쇄</button></p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    성경 이야기 교재 #1 · 천지창조 (창 1:1–2:3). 본문 설명은 학습을 위해 쉽게 풀어 쓴 것이므로, 수업 때는 반드시 성경 본문을 함께 펴서 읽어 주세요.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= DATA ================= */
+var DAYS = [
+  {n:"태초", s:"혼돈과 공허, 깊은 어둠", ref:"창 1:1–2", title:"처음, 아무것도 없을 때",
+   decree:"태초에 하나님이 천지를 창조하시니라",
+   story:"처음에 하나님이 하늘과 땅을 창조하셨어요. 그때 땅은 모양이 없고 텅 비어 있었으며, 깊은 물 위에 어둠이 덮여 있었어요. 그 어둠의 물 위에 하나님의 영이 움직이고 계셨어요.",
+   made:["하늘과 땅의 시작"], good:"",
+   think:"화면 속 물 위를 움직이는 희미한 빛을 찾아보세요. 아무것도 없는 어둠 속에도 하나님은 이미 함께 계셨어요.",
+   note:"‘혼돈하고 공허하며’는 모양이 없고(혼돈) 비어 있는(공허) 상태입니다. 이어지는 6일은 이 두 문제를 ‘나누심’과 ‘채우심’으로 해결하는 과정입니다."},
+  {n:"첫째 날", s:"빛, 낮과 밤", ref:"창 1:3–5", title:"빛이 있으라",
+   decree:"“빛이 있으라”",
+   story:"하나님이 “빛이 있으라” 말씀하시자 빛이 생겼어요. 하나님은 빛을 보시고 좋아하셨고, 빛과 어둠을 나누어 빛은 ‘낮’, 어둠은 ‘밤’이라 부르셨어요.",
+   made:["💡 빛","🌗 낮과 밤"], good:"하나님이 보시기에 좋았더라",
+   think:"아직 해가 없는데 빛이 먼저 생겼어요! 빛은 누구에게서 시작되었을까요? ‘밤으로’ 버튼도 눌러 보세요.",
+   note:"해와 달(넷째 날)보다 빛이 먼저 나옵니다. 빛의 근원이 해가 아니라 하나님의 말씀이라는 점을 강조할 수 있습니다."},
+  {n:"둘째 날", s:"하늘(궁창)", ref:"창 1:6–8", title:"물과 물이 나뉘다",
+   decree:"“물 가운데 궁창이 있어<br>물과 물로 나뉘라”",
+   story:"하나님이 물 가운데 넓은 공간(궁창)을 만드셔서 위의 물과 아래의 물을 나누셨어요. 그리고 그 공간을 ‘하늘’이라 부르셨어요. 화면에서 물이 아래로 내려가고 구름이 위로 올라가는 것을 보세요.",
+   made:["☁️ 하늘","💧 위의 물 · 아래의 물"], good:"",
+   think:"하늘이 없다면 새들은 어디를 날까요? 하나님은 다음에 채우실 것을 위해 미리 자리를 준비하셨어요.",
+   note:"둘째 날에는 “보시기에 좋았더라”가 없습니다. 물을 나누는 일이 셋째 날 뭍이 드러남으로 완성되기 때문이라고 보는 해석이 많습니다."},
+  {n:"셋째 날", s:"땅과 바다, 풀과 나무", ref:"창 1:9–13", title:"뭍이 드러나고 싹이 나다",
+   decree:"“뭍이 드러나라”<br>“땅은 풀과 열매 맺는 나무를 내라”",
+   story:"하나님이 아래의 물을 한곳으로 모으시자 마른 땅이 드러났어요. 땅은 ‘뭍’, 모인 물은 ‘바다’라 부르셨어요. 또 땅에서 풀과 씨 맺는 채소와 열매 맺는 나무가 각기 종류대로 자라게 하셨어요.",
+   made:["⛰️ 땅(뭍)","🌊 바다","🌿 풀과 채소","🌳 열매 맺는 나무"], good:"하나님이 보시기에 좋았더라 (두 번!)",
+   think:"식물은 씨를 맺어 계속 자라나요. 하나님은 세상이 스스로 이어지도록 생명의 질서를 넣어 두셨어요.",
+   note:"셋째 날에는 창조 행위가 두 번(땅·바다, 식물) 나오고 “좋았더라”도 두 번 나옵니다."},
+  {n:"넷째 날", s:"해와 달과 별", ref:"창 1:14–19", title:"하늘의 큰 빛들",
+   decree:"“하늘의 궁창에 광명체들이 있어<br>낮과 밤을 나뉘게 하라”",
+   story:"하나님이 하늘에 빛을 내는 것들을 두셨어요. 큰 빛(해)은 낮을, 작은 빛(달)은 밤을 다스리게 하시고, 별들도 만드셨어요. 이것들로 계절과 날과 해를 알 수 있게 하셨어요.",
+   made:["☀️ 해","🌙 달","⭐ 별"], good:"하나님이 보시기에 좋았더라",
+   think:"첫째 날 만드신 ‘빛’과 넷째 날 만드신 ‘해·달·별’은 서로 짝이에요. 어떤 점이 짝일까요?",
+   note:"고대 주변 민족은 해와 달을 신으로 섬겼지만, 성경은 이름조차 부르지 않고 ‘큰 광명, 작은 광명’이라 하여 피조물일 뿐임을 드러냅니다."},
+  {n:"다섯째 날", s:"물고기와 새", ref:"창 1:20–23", title:"바다와 하늘이 생명으로",
+   decree:"“물들은 생물로 번성하게 하고<br>새는 하늘에 날으라”",
+   story:"하나님이 바다에는 큰 물고기와 온갖 헤엄치는 생물을, 하늘에는 날개 있는 새들을 종류대로 만드셨어요. 그리고 처음으로 복을 주시며 “많이 낳고 번성하라” 하셨어요.",
+   made:["🐟 물고기","🐋 큰 바다 생물","🐦 새"], good:"하나님이 보시기에 좋았더라",
+   think:"둘째 날 만든 ‘하늘과 물’이 오늘 무엇으로 채워졌나요? 화면에서 찾아보세요.",
+   note:"성경에서 처음으로 ‘복을 주시는’ 장면입니다. 복의 내용은 ‘생육과 번성’, 곧 생명이 풍성해지는 것입니다."},
+  {n:"여섯째 날", s:"짐승과 사람", ref:"창 1:24–31", title:"하나님의 형상, 사람",
+   decree:"“우리의 형상을 따라<br>우리의 모양대로 사람을 만들고”",
+   story:"하나님이 땅에 가축과 기는 것과 들짐승을 종류대로 만드셨어요. 그리고 하나님의 형상대로 남자와 여자를 지으시고 복을 주시며, 세상을 돌보고 다스리라고 맡기셨어요. 지으신 모든 것을 보시니 참 좋았어요.",
+   made:["🐑 가축","🦁 들짐승","👫 사람 (남자와 여자)"], good:"하나님이 보시기에 심히 좋았더라",
+   think:"사람만 ‘하나님의 형상대로’ 지어졌어요. 그렇다면 나와 내 친구는 얼마나 소중한 사람일까요?",
+   note:"‘다스리라’는 마음대로 쓰라는 뜻이 아니라, 하나님을 대신해 돌보는 청지기 사명입니다. 여섯째 날에만 ‘심히’ 좋았더라가 나옵니다."},
+  {n:"일곱째 날", s:"안식", ref:"창 2:1–3", title:"하나님이 쉬시다",
+   decree:"하나님이 그 일곱째 날을<br>복되게 하사 거룩하게 하셨으니",
+   story:"하늘과 땅과 그 안의 모든 것이 다 이루어졌어요. 하나님은 일곱째 날에 하시던 일을 마치고 쉬셨어요. 그리고 그날에 복을 주시고 거룩하게 구별하셨어요.",
+   made:["🕊️ 쉼(안식)"], good:"복되게 하사 거룩하게 하셨으니",
+   think:"하나님은 피곤하셔서 쉬신 걸까요? 완성된 세상을 기뻐하며 누리신 거예요. 우리의 쉼은 어떤 모습이면 좋을까요?",
+   note:"일곱째 날에는 “저녁이 되고 아침이 되니”라는 마침 문장이 없습니다. 하나님의 안식이 끝나지 않는 초대임을 묵상할 수 있습니다."}
+];
+
+/* ================= SIMULATION ================= */
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var W=0,H=0,DPR=1,hz=0;
+var day=0, tr=1, nightTarget=0, nightV=0, time=0, last=performance.now();
+var stars=[],clouds=[],birds=[],fish=[],grass=[],flowers=[],motes=[];
+var timers=[], autoTimer=null;
+
+var seed=11; function R(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function ease(t){ t=clamp(t,0,1); return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; }
+function mix(a,b,t){ return "rgb("+Math.round(lerp(a[0],b[0],t))+","+Math.round(lerp(a[1],b[1],t))+","+Math.round(lerp(a[2],b[2],t))+")"; }
+function prog(k){ return day>k?1:(day===k?ease(tr):0); }
+function stag(p,start,len){ return clamp((p-start)/len,0,1); }
+
+function resize(){
+  var r=cv.getBoundingClientRect();
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width; H=r.height;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  hz=H*0.6;
+  seed=11;
+  stars=[]; for(var i=0;i<160;i++) stars.push({x:R()*W,y:R()*hz*0.95,r:R()*1.4+.3,ph:R()*6.28});
+  clouds=[]; for(i=0;i<6;i++) clouds.push({x:R()*W,y:H*(0.07+R()*0.2),s:.6+R()*.8,v:6+R()*10});
+  birds=[]; for(i=0;i<8;i++) birds.push({x:R()*W,y:H*(0.12+R()*0.28),s:.7+R()*.6,v:25+R()*30,ph:R()*6.28});
+  fish=[]; var cols=["#f29e4c","#f2d14c","#e86a6a","#6ad0e8","#b58ae8","#f2f2f2"];
+  for(i=0;i<11;i++) fish.push({x:R()*W*0.5,y:hz+18+R()*(H-hz-36),s:.6+R()*.7,v:(R()<.5?-1:1)*(18+R()*25),c:cols[i%cols.length]});
+  fish.push({x:W*0.25,y:hz+(H-hz)*0.62,s:3.2,v:-9,c:"#3d5f86",whale:true});
+  grass=[]; for(var x=W*0.52;x<W;x+=5) grass.push({x:x+R()*3,h:5+R()*9,lean:(R()-.5)*4,d:R()});
+  flowers=[]; var fc=["#f7e36b","#f58fb0","#ffffff","#c79bf2"];
+  for(i=0;i<16;i++) flowers.push({x:W*(0.54+R()*0.45),c:fc[i%4],d:R()});
+  motes=[]; for(i=0;i<50;i++) motes.push({x:R()*W,y:R()*H,v:8+R()*16,r:1+R()*2.2,ph:R()*6.28});
+}
+
+function landY(x,p3){
+  var u=(x-W*0.5)/(W*0.5);
+  if(u<0) return H+60;
+  var top=hz-H*0.075-H*0.022*Math.sin(u*8+1)-H*0.01*Math.sin(u*23);
+  var y=lerp(hz+8,top,ease(clamp(u/0.22,0,1)));
+  return y+(1-p3)*H*0.32;
+}
+
+function drawSky(p1,p2){
+  // before firmament: misty light over the deep
+  ctx.fillStyle="#6f6a5f"; ctx.fillRect(0,0,W,H);
+  if(p1>0){
+    var g=ctx.createRadialGradient(W*.5,H*.25,0,W*.5,H*.25,Math.max(W,H)*.9);
+    g.addColorStop(0,"rgba(255,248,225,1)"); g.addColorStop(.45,"rgba(214,200,168,1)"); g.addColorStop(1,"rgba(120,112,98,1)");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  }
+  if(p2>0){
+    ctx.globalAlpha=p2;
+    var dayTop=[74,152,222],dayBot=[196,230,248],nTop=[10,18,48],nBot=[34,48,92];
+    var sg=ctx.createLinearGradient(0,0,0,hz);
+    sg.addColorStop(0,mix(dayTop,nTop,nightV)); sg.addColorStop(1,mix(dayBot,nBot,nightV));
+    ctx.fillStyle=sg; ctx.fillRect(0,0,W,hz+2);
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawSun(p4){
+  if(p4<=0) return;
+  var a=p4*(1-nightV);
+  if(a<=0.01) return;
+  var x=W*0.2, y=lerp(hz+30,H*0.16,p4)+nightV*(hz-H*0.1);
+  var r=Math.min(W,H)*0.06;
+  var g=ctx.createRadialGradient(x,y,0,x,y,r*5);
+  g.addColorStop(0,"rgba(255,244,200,"+(0.8*a)+")"); g.addColorStop(1,"rgba(255,220,140,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*5,0,7); ctx.fill();
+  ctx.fillStyle="rgba(255,236,150,"+a+")"; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+}
+
+function drawClouds(p2,dt){
+  if(p2<=0) return;
+  clouds.forEach(function(c){
+    c.x+=c.v*dt; if(c.x>W+120) c.x=-120;
+    var y=lerp(hz+20,c.y,p2), s=c.s*Math.min(W,H)/420;
+    ctx.fillStyle="rgba("+(nightV>0.5?"150,160,190":"255,255,255")+","+(0.85*p2*(1-nightV*0.5))+")";
+    ctx.beginPath();
+    ctx.ellipse(c.x,y,34*s,13*s,0,0,7); ctx.ellipse(c.x-24*s,y+4*s,22*s,10*s,0,0,7);
+    ctx.ellipse(c.x+26*s,y+3*s,24*s,10*s,0,0,7); ctx.ellipse(c.x+4*s,y-9*s,20*s,12*s,0,0,7);
+    ctx.fill();
+  });
+}
+
+function drawBirds(p5,dt){
+  if(p5<=0) return;
+  ctx.lineCap="round"; ctx.lineWidth=2;
+  birds.forEach(function(b,i){
+    var bp=stag(p5,i*0.06,0.5); if(bp<=0) return;
+    b.x+=b.v*dt*(day===7?0.5:1); if(b.x>W+30) b.x=-30;
+    var s=b.s*Math.min(W,H)/380*bp, f=Math.sin(time*7+b.ph)*6*s;
+    var y=b.y+Math.sin(time*1.3+b.ph)*4;
+    ctx.strokeStyle="rgba(40,40,50,"+bp+")";
+    ctx.beginPath(); ctx.moveTo(b.x-9*s,y-f); ctx.quadraticCurveTo(b.x-4*s,y-3*s,b.x,y); ctx.quadraticCurveTo(b.x+4*s,y-3*s,b.x+9*s,y-f); ctx.stroke();
+  });
+}
+
+function drawSea(p1,p2,p3){
+  var top=lerp(H*0.3,hz,p2);
+  var deep=[8,12,22], lit=[40,70,98], blue=[40,118,178], nb=[16,34,70];
+  var c1=mix(deep,lit,p1);
+  var bn=[lerp(blue[0],nb[0],nightV),lerp(blue[1],nb[1],nightV),lerp(blue[2],nb[2],nightV)];
+  var col=p2>0?mix(lit,bn,p2):c1;
+  var g=ctx.createLinearGradient(0,top,0,H);
+  g.addColorStop(0,col); g.addColorStop(1,"rgba(6,14,30,1)");
+  ctx.fillStyle=g; ctx.fillRect(0,top,W,H-top);
+  // waves
+  ctx.lineWidth=1.3;
+  var rows=7, rough=1-0.6*p3;
+  for(var r=0;r<rows;r++){
+    var y0=top+6+r*(H-top)/rows;
+    ctx.strokeStyle="rgba(255,255,255,"+(0.05+0.1*p1*(1-r/rows))+")";
+    ctx.beginPath();
+    for(var x=0;x<=W;x+=10){
+      var y=y0+Math.sin(x*0.02+time*(1.1+r*.15)+r)*4*rough+Math.sin(x*0.051-time*1.7)*2*rough;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  return top;
+}
+
+function drawFish(p5,dt,seaTop){
+  if(p5<=0) return;
+  fish.forEach(function(f,i){
+    var fp=stag(p5,i*0.05,0.5); if(fp<=0) return;
+    var sp=day===7?0.4:1;
+    f.x+=f.v*dt*sp;
+    var maxX=W*0.56;
+    if(f.x>maxX+40){ f.x=-40; } if(f.x<-60){ f.x=maxX+30; }
+    var s=f.s*Math.min(W,H)/420*fp, dir=f.v>0?1:-1;
+    var y=f.y+Math.sin(time*2+i)*3;
+    if(y<seaTop+8) return;
+    ctx.save(); ctx.translate(f.x,y); ctx.scale(dir,1);
+    ctx.globalAlpha=fp*(1-nightV*0.4);
+    ctx.fillStyle=f.c;
+    var tail=Math.sin(time*(f.whale?2:9)+i)*3*s;
+    ctx.beginPath(); ctx.ellipse(0,0,12*s,5.5*s,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-10*s,0); ctx.lineTo(-19*s,-6*s+tail); ctx.lineTo(-19*s,6*s+tail); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="rgba(0,0,0,.7)"; ctx.beginPath(); ctx.arc(7*s,-1.5*s,1.2*s,0,7); ctx.fill();
+    if(f.whale){ ctx.fillStyle="rgba(255,255,255,.25)"; ctx.beginPath(); ctx.ellipse(1*s,2.5*s,8*s,2*s,0,0,7); ctx.fill(); }
+    ctx.restore();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawLand(p3){
+  if(p3<=0) return;
+  var g=ctx.createLinearGradient(0,hz-H*0.12,0,H);
+  var tone=1-nightV*0.55;
+  g.addColorStop(0,"rgb("+Math.round(122*tone)+","+Math.round(186*tone)+","+Math.round(92*tone)+")");
+  g.addColorStop(1,"rgb("+Math.round(58*tone)+","+Math.round(110*tone)+","+Math.round(52*tone)+")");
+  // soil first (before green)
+  var green=stag(p3,0.25,0.5);
+  ctx.beginPath(); ctx.moveTo(W*0.49,H);
+  for(var x=W*0.49;x<=W+4;x+=4) ctx.lineTo(x,landY(x,p3));
+  ctx.lineTo(W,H); ctx.closePath();
+  ctx.fillStyle="rgb("+Math.round(150*tone)+","+Math.round(120*tone)+","+Math.round(84*tone)+")"; ctx.fill();
+  if(green>0){ ctx.globalAlpha=green; ctx.fillStyle=g; ctx.fill(); ctx.globalAlpha=1; }
+  // shore
+  ctx.strokeStyle="rgba(240,222,170,"+(0.8*p3)+")"; ctx.lineWidth=3;
+  ctx.beginPath(); for(x=W*0.5;x<=W*0.62;x+=4){ var y=landY(x,p3); x===W*0.5?ctx.moveTo(x,y):ctx.lineTo(x,y);} ctx.stroke();
+
+  var gp=stag(p3,0.35,0.5);
+  if(gp>0){
+    ctx.lineWidth=1.4;
+    grass.forEach(function(b){
+      var bp=clamp(gp*1.3-b.d*0.3,0,1); if(bp<=0) return;
+      var y=landY(b.x,p3), sway=Math.sin(time*1.5+b.x*0.05)*1.5;
+      ctx.strokeStyle="rgba("+Math.round(60*tone)+","+Math.round(140*tone)+","+Math.round(50*tone)+",1)";
+      ctx.beginPath(); ctx.moveTo(b.x,y+2); ctx.quadraticCurveTo(b.x+b.lean,y-b.h*bp*0.6,b.x+b.lean+sway,y-b.h*bp); ctx.stroke();
+    });
+    flowers.forEach(function(f){
+      var fp=clamp(gp*1.4-f.d*0.4,0,1); if(fp<=0) return;
+      var y=landY(f.x,p3)-5;
+      ctx.fillStyle=f.c; ctx.globalAlpha=fp*tone; ctx.beginPath(); ctx.arc(f.x,y,2.4*fp,0,7); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
+  var trees=[0.58,0.67,0.85,0.94];
+  trees.forEach(function(tx,i){
+    var tp=ease(stag(p3,0.5+i*0.08,0.35)); if(tp<=0) return;
+    var x=W*tx, y=landY(x,p3), k=Math.min(W,H)/400;
+    var th=48*k*tp, cr=26*k*tp;
+    ctx.fillStyle="rgb("+Math.round(110*tone)+","+Math.round(74*tone)+","+Math.round(44*tone)+")";
+    ctx.fillRect(x-3.5*k*tp,y-th,7*k*tp,th+2);
+    var sway=Math.sin(time*0.9+i)*1.5*k;
+    var cg="rgb("+Math.round(58*tone)+","+Math.round(142*tone)+","+Math.round(66*tone)+")";
+    var cg2="rgb("+Math.round(82*tone)+","+Math.round(168*tone)+","+Math.round(78*tone)+")";
+    ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(x+sway,y-th-cr*0.4,cr,0,7); ctx.arc(x-cr*0.7+sway,y-th+cr*0.1,cr*0.7,0,7); ctx.arc(x+cr*0.75+sway,y-th+cr*0.1,cr*0.7,0,7); ctx.fill();
+    ctx.fillStyle=cg2; ctx.beginPath(); ctx.arc(x-cr*0.25+sway,y-th-cr*0.65,cr*0.5,0,7); ctx.fill();
+    if(tp>0.9 && i%2===0){
+      ctx.fillStyle="rgba(214,58,58,"+((tp-0.9)*10*tone)+")";
+      [[-.4,-.2],[.35,-.5],[.1,.1],[-.1,-.8],[.55,.05]].forEach(function(o){ ctx.beginPath(); ctx.arc(x+sway+o[0]*cr,y-th-cr*0.4+o[1]*cr,3*k,0,7); ctx.fill(); });
+    }
+  });
+}
+
+function animal(kind,x,y,k,a,flip){
+  ctx.save(); ctx.translate(x,y); ctx.scale(flip?-k:k,k); ctx.globalAlpha=a;
+  var tone=1-nightV*0.5;
+  function c(r,g,b){ return "rgb("+Math.round(r*tone)+","+Math.round(g*tone)+","+Math.round(b*tone)+")"; }
+  ctx.lineCap="round";
+  if(kind==="sheep"){
+    ctx.strokeStyle=c(50,45,40); ctx.lineWidth=2.2;
+    [-7,-2,4,8].forEach(function(l){ ctx.beginPath(); ctx.moveTo(l,-4); ctx.lineTo(l,0); ctx.stroke(); });
+    ctx.fillStyle=c(248,246,240);
+    [[-6,-9,6],[0,-11,7],[6,-9,6],[0,-7,8]].forEach(function(o){ ctx.beginPath(); ctx.arc(o[0],o[1],o[2],0,7); ctx.fill(); });
+    ctx.fillStyle=c(50,45,40); ctx.beginPath(); ctx.ellipse(12,-11,4,3.4,0.3,0,7); ctx.fill();
+  } else if(kind==="lion"){
+    ctx.strokeStyle=c(170,110,40); ctx.lineWidth=3;
+    [-10,-5,6,11].forEach(function(l){ ctx.beginPath(); ctx.moveTo(l,-6); ctx.lineTo(l,0); ctx.stroke(); });
+    ctx.fillStyle=c(214,152,62); ctx.beginPath(); ctx.ellipse(0,-11,15,7,0,0,7); ctx.fill();
+    ctx.strokeStyle=c(214,152,62); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-14,-12); ctx.quadraticCurveTo(-22,-18,-21,-8); ctx.stroke();
+    ctx.fillStyle=c(150,84,30); ctx.beginPath(); ctx.arc(15,-16,9,0,7); ctx.fill();
+    ctx.fillStyle=c(226,168,76); ctx.beginPath(); ctx.arc(17,-16,5.5,0,7); ctx.fill();
+  } else if(kind==="rabbit"){
+    ctx.fillStyle=c(200,190,178);
+    ctx.beginPath(); ctx.ellipse(0,-5,7,5,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-9,3.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5,-16,1.6,5,-.2,0,7); ctx.ellipse(8,-16,1.6,5,.25,0,7); ctx.fill();
+  } else if(kind==="deer"){
+    ctx.strokeStyle=c(140,90,52); ctx.lineWidth=2.2;
+    [-8,-4,6,10].forEach(function(l){ ctx.beginPath(); ctx.moveTo(l,-9); ctx.lineTo(l,0); ctx.stroke(); });
+    ctx.fillStyle=c(170,110,62); ctx.beginPath(); ctx.ellipse(1,-13,12,5.5,0,0,7); ctx.fill();
+    ctx.lineWidth=3.5; ctx.strokeStyle=c(170,110,62); ctx.beginPath(); ctx.moveTo(10,-15); ctx.lineTo(14,-25); ctx.stroke();
+    ctx.fillStyle=c(170,110,62); ctx.beginPath(); ctx.ellipse(17,-26,4.5,2.8,.3,0,7); ctx.fill();
+    ctx.strokeStyle=c(110,80,50); ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(14,-28); ctx.lineTo(11,-35); ctx.moveTo(12,-32); ctx.lineTo(8,-34); ctx.moveTo(15,-28); ctx.lineTo(17,-35); ctx.stroke();
+  }
+  ctx.restore(); ctx.globalAlpha=1;
+}
+
+function human(x,y,k,a,female){
+  ctx.save(); ctx.translate(x,y); ctx.scale(k,k); ctx.globalAlpha=a;
+  var tone=1-nightV*0.4;
+  var skin="rgb("+Math.round(222*tone)+","+Math.round(178*tone)+","+Math.round(138*tone)+")";
+  var hair="rgb("+Math.round(70*tone)+","+Math.round(46*tone)+","+Math.round(30*tone)+")";
+  var leaf="rgb("+Math.round(84*tone)+","+Math.round(150*tone)+","+Math.round(72*tone)+")";
+  // legs
+  ctx.strokeStyle=skin; ctx.lineWidth=4; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(-3,-16); ctx.lineTo(-3.5,0); ctx.moveTo(3,-16); ctx.lineTo(3.5,0); ctx.stroke();
+  // body
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.moveTo(-6,-36); ctx.lineTo(6,-36); ctx.lineTo(5,-16); ctx.lineTo(-5,-16); ctx.closePath(); ctx.fill();
+  // leaf garment band (modest)
+  ctx.fillStyle=leaf; ctx.beginPath(); ctx.moveTo(-6.5,female?-34:-22); ctx.lineTo(6.5,female?-34:-22); ctx.lineTo(6,-12); ctx.lineTo(-6,-12); ctx.closePath(); ctx.fill();
+  // arms
+  ctx.strokeStyle=skin; ctx.lineWidth=3.2;
+  var wave=Math.sin(time*1.4+(female?1:0))*2;
+  ctx.beginPath(); ctx.moveTo(-6,-34); ctx.lineTo(-9,-21+wave); ctx.moveTo(6,-34); ctx.lineTo(9,-21-wave); ctx.stroke();
+  // head
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(0,-42,6,0,7); ctx.fill();
+  ctx.fillStyle=hair; ctx.beginPath();
+  if(female){ ctx.arc(0,-43,6.6,Math.PI*1.02,Math.PI*1.98); ctx.fill(); ctx.fillRect(-6.6,-43,3,16); ctx.fillRect(3.6,-43,3,16); }
+  else { ctx.arc(0,-43.5,6.3,Math.PI*1.05,Math.PI*1.95); ctx.fill(); }
+  ctx.restore(); ctx.globalAlpha=1;
+}
+
+function drawCreatures(p6,p3){
+  if(p6<=0) return;
+  var k=Math.min(W,H)/420;
+  var list=[["rabbit",0.555,0],["sheep",0.63,1],["sheep",0.705,2],["lion",0.885,3],["deer",0.965,4]];
+  list.forEach(function(a,i){
+    var ap=ease(stag(p6,i*0.07,0.35)); if(ap<=0) return;
+    var walk=Math.sin(time*0.35+i*1.7)*W*0.012;
+    var x=W*a[1]+walk, y=landY(x,p3)+1;
+    animal(a[0],x,y-(1-ap)*10,k*1.15,ap,Math.cos(time*0.35+i*1.7)<0);
+  });
+  var hp=ease(stag(p6,0.5,0.45));
+  if(hp>0){
+    var x1=W*0.765, x2=W*0.795, y1=landY(x1,p3), y2=landY(x2,p3);
+    var g=ctx.createRadialGradient(W*0.78,y1-20*k,0,W*0.78,y1-20*k,70*k);
+    g.addColorStop(0,"rgba(255,240,190,"+(0.55*hp)+")"); g.addColorStop(1,"rgba(255,240,190,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(W*0.78,y1-20*k,70*k,0,7); ctx.fill();
+    human(x1,y1+1,k*1.25,hp,false);
+    human(x2,y2+1,k*1.18,hp,true);
+  }
+}
+
+function drawNightSky(p4){
+  if(p4<=0 || nightV<=0.01) return;
+  var a=p4*nightV;
+  stars.forEach(function(s){
+    var tw=0.6+0.4*Math.sin(time*2+s.ph);
+    ctx.fillStyle="rgba(255,255,240,"+(a*tw)+")";
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+  });
+  var x=W*0.8, y=lerp(hz,H*0.17,a), r=Math.min(W,H)*0.045;
+  var g=ctx.createRadialGradient(x,y,0,x,y,r*4);
+  g.addColorStop(0,"rgba(230,236,255,"+(0.35*a)+")"); g.addColorStop(1,"rgba(230,236,255,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*4,0,7); ctx.fill();
+  ctx.fillStyle="rgba(244,242,226,"+a+")"; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  ctx.fillStyle="rgba(200,198,180,"+(a*0.6)+")";
+  [[-.3,-.2,.18],[.25,.15,.14],[.05,.4,.1]].forEach(function(o){ ctx.beginPath(); ctx.arc(x+o[0]*r,y+o[1]*r,o[2]*r,0,7); ctx.fill(); });
+}
+
+function drawSpirit(){
+  var a = day===0 ? 1 : (day===1 ? Math.max(0,1-tr*1.5) : 0);
+  if(a<=0) return;
+  var x=W*0.5+Math.sin(time*0.35)*W*0.32, y=H*0.36+Math.sin(time*0.9)*H*0.03;
+  var r=Math.min(W,H)*0.22;
+  var g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,"rgba(255,250,230,"+(0.22*a)+")"); g.addColorStop(.4,"rgba(220,225,255,"+(0.08*a)+")"); g.addColorStop(1,"rgba(200,210,255,0)");
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,r*1.6,r*0.55,0,0,7); ctx.fill();
+}
+
+function drawRest(p7,dt){
+  if(p7<=0) return;
+  var g=ctx.createRadialGradient(W*0.5,H*0.2,0,W*0.5,H*0.2,Math.max(W,H));
+  g.addColorStop(0,"rgba(255,226,150,"+(0.28*p7)+")"); g.addColorStop(1,"rgba(255,210,120,"+(0.06*p7)+")");
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  motes.forEach(function(m){
+    m.y-=m.v*dt; if(m.y<-10){ m.y=H+10; }
+    var x=m.x+Math.sin(time*0.8+m.ph)*10;
+    ctx.fillStyle="rgba(255,236,170,"+(0.7*p7*(0.5+0.5*Math.sin(time*2+m.ph)))+")";
+    ctx.beginPath(); ctx.arc(x,m.y,m.r,0,7); ctx.fill();
+  });
+}
+
+function frame(now){
+  var dt=Math.min(0.05,(now-last)/1000); last=now; time+=dt;
+  if(tr<1) tr=Math.min(1,tr+dt/2.6);
+  nightV+=(nightTarget-nightV)*Math.min(1,dt*2.2);
+  if(W===0){ requestAnimationFrame(frame); return; }
+  var p1=prog(1),p2=prog(2),p3=prog(3),p4=prog(4),p5=prog(5),p6=prog(6),p7=prog(7);
+
+  drawSky(p1,p2);
+  drawSun(p4);
+  drawClouds(p2,dt);
+  drawBirds(p5,dt);
+  var seaTop=drawSea(p1,p2,p3);
+  drawFish(p5,dt,seaTop);
+  drawLand(p3);
+  drawCreatures(p6,p3);
+
+  // darkness: day0 = deep dark; light reduces it; night brings some back
+  var L=p1*(1-0.72*nightV);
+  var dark=0.93*(1-L);
+  if(dark>0){ ctx.fillStyle="rgba(4,6,14,"+dark+")"; ctx.fillRect(0,0,W,H); }
+  drawNightSky(p4);
+  drawSpirit();
+  drawRest(p7,dt);
+
+  // flash of the word
+  if(day>0 && tr<0.4){
+    var f=(1-tr/0.4); ctx.fillStyle="rgba(255,250,235,"+(0.45*f*f)+")"; ctx.fillRect(0,0,W,H);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ------- UI ------- */
+var lblN=document.getElementById("lblN"), lblS=document.getElementById("lblS"),
+    decree=document.getElementById("decree"), hint=document.getElementById("hint"),
+    panel=document.getElementById("panel"), btnPrev=document.getElementById("prev"),
+    btnNext=document.getElementById("next"), btnNight=document.getElementById("night"),
+    btnPlay=document.getElementById("play"), daysEl=document.getElementById("days");
+
+daysEl.innerHTML=DAYS.map(function(d,i){
+  return '<button class="dbtn" data-d="'+i+'"><b>'+(i===0?"태초":i+"일")+'</b>'+d.s.split(",")[0].split(" ")[0]+'</button>';
+}).join("");
+daysEl.addEventListener("click",function(e){ var b=e.target.closest(".dbtn"); if(b){ stopAuto(); goDay(+b.dataset.d); } });
+
+function showHint(txt,ms){ hint.textContent=txt; hint.classList.add("show"); var id=setTimeout(function(){ hint.classList.remove("show"); },ms||4000); timers.push(id); }
+
+function renderPanel(){
+  var d=DAYS[day];
+  panel.innerHTML=
+    '<div class="ref">'+d.ref+'</div>'+
+    '<h3>'+d.title+'</h3>'+
+    '<p class="story">'+d.story+'</p>'+
+    '<div class="made">'+d.made.map(function(m){return '<span>'+m+'</span>';}).join("")+'</div>'+
+    (d.good?'<div class="good">“'+d.good+'”</div>':'')+
+    (day>0&&day<7?'<div style="font-size:14px;color:var(--muted)">저녁이 되고 아침이 되니, '+["","첫째","둘째","셋째","넷째","다섯째","여섯째"][day]+' 날이었어요.</div>':'')+
+    '<div class="think"><b>생각해 보기</b>'+d.think+'</div>'+
+    '<details class="tnote"><summary>교사 노트</summary><p style="margin:.5em 0 0">'+d.note+'</p></details>';
+}
+
+function goDay(n){
+  n=clamp(n,0,7);
+  timers.forEach(clearTimeout); timers=[];
+  day=n; tr=(n===0)?1:0;
+  if(n<4) nightTarget=0;
+  if(n===0) nightTarget=0;
+  lblN.textContent=DAYS[n].n; lblS.textContent=DAYS[n].s;
+  decree.classList.remove("show"); void decree.offsetWidth;
+  decree.innerHTML=DAYS[n].decree; decree.classList.add("show");
+  btnPrev.disabled=n===0; btnNext.disabled=n===7;
+  btnNext.textContent=n===0?"첫째 날 ▶":(n===7?"완성":"다음 날 ▶");
+  btnNight.disabled=n===0;
+  updateNightBtn();
+  Array.prototype.forEach.call(daysEl.children,function(b,i){ b.classList.toggle("active",i===n); b.classList.toggle("done",i<n); });
+  renderPanel();
+  if(n===1) timers.push(setTimeout(function(){ showHint("‘밤으로’ 버튼으로 빛과 어둠이 나뉜 것을 보세요",4500); },3200));
+  if(n===4){
+    nightTarget=0;
+    timers.push(setTimeout(function(){ nightTarget=1; updateNightBtn(); showHint("작은 빛(달)과 별들이 밤을 비춥니다",3500); },3200));
+    timers.push(setTimeout(function(){ nightTarget=0; updateNightBtn(); showHint("큰 빛(해)이 낮을 다스립니다",3000); },7600));
+  }
+  if(n===5) timers.push(setTimeout(function(){ showHint("바다의 물고기와 하늘의 새를 찾아보세요",4000); },3000));
+  if(n===6) timers.push(setTimeout(function(){ showHint("하나님의 형상대로 지음받은 사람",4000); },3200));
+  if(n===7) nightTarget=0;
+}
+function updateNightBtn(){
+  var on=nightTarget>0.5;
+  btnNight.classList.toggle("on",on);
+  btnNight.textContent=on?"☀ 낮으로":"☾ 밤으로";
+}
+btnPrev.onclick=function(){ stopAuto(); goDay(day-1); };
+btnNext.onclick=function(){ stopAuto(); goDay(day+1); };
+btnNight.onclick=function(){ nightTarget=nightTarget>0.5?0:1; updateNightBtn(); };
+function stopAuto(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; btnPlay.textContent="▶ 자동 재생"; } }
+btnPlay.onclick=function(){
+  if(autoTimer){ stopAuto(); return; }
+  if(day===7) goDay(0);
+  btnPlay.textContent="❚❚ 멈춤";
+  autoTimer=setInterval(function(){ if(day>=7){ stopAuto(); return; } goDay(day+1); },9000);
+};
+document.addEventListener("keydown",function(e){
+  if(e.target.closest("input,textarea")) return;
+  if(e.key==="ArrowRight"){ stopAuto(); goDay(day+1); }
+  if(e.key==="ArrowLeft"){ stopAuto(); goDay(day-1); }
+});
+
+if(window.ResizeObserver){ new ResizeObserver(resize).observe(cv); } else { window.addEventListener("resize",resize); }
+resize();
+goDay(0);
+requestAnimationFrame(frame);
+
+/* ================= FRAME GRID ================= */
+var PAIRS=[
+  [1,"빛 · 낮과 밤","💡",4,"해 · 달 · 별","☀️"],
+  [2,"하늘 · 위아래 물","☁️",5,"새 · 물고기","🐦"],
+  [3,"땅 · 바다 · 식물","🌳",6,"짐승 · 사람","🐑"]
+];
+var fg=document.getElementById("frameGrid"), fh="";
+PAIRS.forEach(function(p){
+  fh+='<button class="fcell" data-go="'+p[0]+'"><span class="e">'+p[2]+'</span><div class="d">'+p[0]+'일</div><div class="w">'+p[1]+'</div></button>'+
+      '<div class="arrow">⟷</div>'+
+      '<button class="fcell" data-go="'+p[3]+'"><span class="e">'+p[5]+'</span><div class="d">'+p[3]+'일</div><div class="w">'+p[4]+'</div></button>';
+});
+fh+='<button class="frame-foot" data-go="7">7일 · 모든 것을 이루시고 안식하심 🕊️</button>';
+fg.insertAdjacentHTML("beforeend",fh);
+fg.addEventListener("click",function(e){
+  var b=e.target.closest("[data-go]"); if(!b) return;
+  stopAuto(); goDay(+b.dataset.go);
+  document.getElementById("sim").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+/* ================= MATCH GAME ================= */
+var ITEMS=[
+  {e:"💡",n:"빛",d:1},{e:"🌗",n:"낮과 밤",d:1},
+  {e:"☁️",n:"하늘(궁창)",d:2},
+  {e:"⛰️",n:"땅",d:3},{e:"🌊",n:"바다",d:3},{e:"🌳",n:"나무와 풀",d:3},
+  {e:"☀️",n:"해",d:4},{e:"🌙",n:"달",d:4},{e:"⭐",n:"별",d:4},
+  {e:"🐟",n:"물고기",d:5},{e:"🐦",n:"새",d:5},
+  {e:"🐑",n:"가축",d:6},{e:"🦁",n:"들짐승",d:6},{e:"👫",n:"사람",d:6},
+  {e:"🕊️",n:"쉼(안식)",d:7}
+];
+var poolEl=document.getElementById("pool"), slotsEl=document.getElementById("slots"),
+    gScore=document.getElementById("gScore"), gMsg=document.getElementById("gMsg");
+var selIdx=null, placed=0, tries=0;
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function setupGame(){
+  selIdx=null; placed=0; tries=0; gMsg.textContent="";
+  var order=shuffle(ITEMS.map(function(_,i){return i;}));
+  poolEl.innerHTML=order.map(function(i){ return '<button class="item" data-i="'+i+'"><span class="ic">'+ITEMS[i].e+'</span>'+ITEMS[i].n+'</button>'; }).join("");
+  var sh=""; for(var d=1;d<=7;d++) sh+='<button class="slot" data-d="'+d+'"><div class="sh">'+d+'일</div></button>';
+  slotsEl.innerHTML=sh;
+  updScore();
+}
+function updScore(){ gScore.textContent="맞힌 카드 "+placed+" / "+ITEMS.length+(tries?" · 시도 "+tries+"번":""); }
+poolEl.addEventListener("click",function(e){
+  var b=e.target.closest(".item"); if(!b) return;
+  Array.prototype.forEach.call(poolEl.children,function(c){ c.classList.remove("sel"); });
+  selIdx=+b.dataset.i; b.classList.add("sel");
+  Array.prototype.forEach.call(slotsEl.children,function(s){ s.classList.add("ready"); });
+});
+slotsEl.addEventListener("click",function(e){
+  var s=e.target.closest(".slot"); if(!s || selIdx===null) return;
+  tries++;
+  var it=ITEMS[selIdx], d=+s.dataset.d;
+  if(it.d===d){
+    var b=poolEl.querySelector('[data-i="'+selIdx+'"]'); b.classList.remove("sel"); b.classList.add("placed"); s.appendChild(b);
+    placed++; selIdx=null;
+    Array.prototype.forEach.call(slotsEl.children,function(x){ x.classList.remove("ready"); });
+    gMsg.style.color="var(--ok)";
+    gMsg.textContent=placed===ITEMS.length?"🎉 모두 맞혔어요! 하나님은 질서 있게 세상을 지으셨어요.":"정답! "+it.n+"은(는) "+d+"째 날에 지으셨어요.";
+  } else {
+    s.classList.remove("wrong"); void s.offsetWidth; s.classList.add("wrong");
+    gMsg.style.color="var(--bad)"; gMsg.textContent="다시 생각해 보세요. 시뮬레이션에서 "+it.n+"이(가) 언제 나타났나요?";
+  }
+  updScore();
+});
+document.getElementById("gReset").onclick=setupGame;
+document.getElementById("gAnswer").onclick=function(){
+  Array.prototype.slice.call(poolEl.querySelectorAll(".item")).forEach(function(b){
+    var i=+b.dataset.i; b.classList.remove("sel"); b.classList.add("placed");
+    slotsEl.querySelector('[data-d="'+ITEMS[i].d+'"]').appendChild(b);
+  });
+  placed=ITEMS.length; selIdx=null; updScore();
+  Array.prototype.forEach.call(slotsEl.children,function(x){ x.classList.remove("ready"); });
+  gMsg.style.color="var(--muted)"; gMsg.textContent="정답을 펼쳤어요. ‘다시 하기’로 새로 도전할 수 있어요.";
+};
+setupGame();
+
+/* ================= QUIZ ================= */
+var QUIZ=[
+  {q:"하나님은 무엇으로 세상을 창조하셨나요?",o:["말씀으로","큰 폭발로","천사들에게 시켜서","다른 신들과 함께"],a:0,x:"창세기 1장에는 “하나님이 이르시되 … 그대로 되니라”가 반복됩니다. 하나님은 말씀으로 창조하셨어요."},
+  {q:"첫째 날 하나님이 만드신 것은?",o:["해와 달","빛","하늘","식물"],a:1,x:"“빛이 있으라” — 해가 만들어지기 전에 빛이 먼저 있었어요."},
+  {q:"해와 달과 별은 몇째 날에 만드셨나요?",o:["첫째 날","셋째 날","넷째 날","여섯째 날"],a:2,x:"넷째 날에 큰 광명(해), 작은 광명(달), 그리고 별들을 만드셨어요. 첫째 날의 ‘빛’과 짝을 이룹니다."},
+  {q:"처음으로 ‘복을 주신’ 대상은 누구인가요?",o:["사람","물고기와 새","식물","해와 달"],a:1,x:"다섯째 날 물고기와 새에게 “생육하고 번성하라”며 처음 복을 주셨어요."},
+  {q:"사람은 무엇대로 지음받았나요?",o:["천사의 모습","동물의 모습","하나님의 형상","흙의 모양"],a:2,x:"하나님은 자기 형상대로 남자와 여자를 창조하셨어요. 그래서 모든 사람은 존귀해요."},
+  {q:"일곱째 날 하나님은 무엇을 하셨나요?",o:["사람을 만드셨다","바다를 만드셨다","쉬시고 그날을 복되고 거룩하게 하셨다","별을 만드셨다"],a:2,x:"일곱째 날 하나님은 모든 일을 마치고 안식하셨으며, 그날을 복 주시고 거룩하게 하셨어요."}
+];
+var qb=document.getElementById("quizBox"), qCorrect=0, qDone=0;
+qb.innerHTML=QUIZ.map(function(q,i){
+  return '<div class="q" data-q="'+i+'"><div class="qt"><span>Q'+(i+1)+'.</span>'+q.q+'</div><div class="opts">'+
+    q.o.map(function(o,j){ return '<button class="opt" data-j="'+j+'">'+o+'</button>'; }).join("")+
+    '</div><div class="exp">'+q.x+'</div></div>';
+}).join("")+'<div class="quiz-score" id="qScore"></div>';
+qb.addEventListener("click",function(e){
+  var b=e.target.closest(".opt"); if(!b || b.disabled) return;
+  var box=b.closest(".q"), i=+box.dataset.q, j=+b.dataset.j, q=QUIZ[i];
+  box.querySelectorAll(".opt").forEach(function(o,k){ o.disabled=true; if(k===q.a) o.classList.add("right"); });
+  if(j!==q.a) b.classList.add("wrongp"); else qCorrect++;
+  qDone++;
+  box.querySelector(".exp").classList.add("show");
+  if(qDone===QUIZ.length) document.getElementById("qScore").textContent="결과: "+QUIZ.length+"문제 중 "+qCorrect+"문제 정답 "+(qCorrect===QUIZ.length?"— 훌륭해요! 👏":"");
+});
+
+/* ================= SHARE ================= */
+var SHARE={
+  "어린이":["하나님이 만드신 것 중에서 가장 좋아하는 것은 무엇인가요? 왜 좋아요?","하나님이 나를 하나님의 모습대로 만드셨다는 걸 알면 어떤 마음이 들어요?","하나님이 쉬신 것처럼, 우리 가족이 함께 쉬는 날에는 무엇을 하면 좋을까요?"],
+  "청소년":["내 삶에서 하나님이 정해주신 질서와 쉼을 어떻게 지키고 있는지 나눠보자.","창조가 ‘틀 → 채움’의 질서로 짜여 있다는 사실은 하나님이 어떤 분이심을 보여 줄까?","‘하나님의 형상’으로 지어졌다는 사실이 나의 외모·성적·비교 의식에 어떤 답을 줄 수 있을까?"],
+  "성인":["내 삶에서 하나님이 정해주신 질서와 쉼을 어떻게 지키고 있는지 나눠보자.","‘다스리라’는 사명을 오늘의 청지기 삶(일터, 환경, 관계)에서 어떻게 실천할 수 있을까?","안식을 ‘일을 멈춤’이 아니라 ‘하나님의 선하심을 누림’으로 본다면, 나의 주일과 쉼은 어떻게 달라질까?"]
+};
+var tabsEl=document.getElementById("tabs"), qlist=document.getElementById("qlist");
+tabsEl.innerHTML=Object.keys(SHARE).map(function(k,i){ return '<button class="tab'+(i===0?" on":"")+'" data-k="'+k+'">'+k+'</button>'; }).join("");
+function showShare(k){ qlist.innerHTML=SHARE[k].map(function(q){ return "<li>"+q+"</li>"; }).join(""); }
+tabsEl.addEventListener("click",function(e){ var b=e.target.closest(".tab"); if(!b) return;
+  Array.prototype.forEach.call(tabsEl.children,function(t){ t.classList.toggle("on",t===b); }); showShare(b.dataset.k); });
+showShare("어린이");
+
+/* ================= THEME ================= */
+document.getElementById("themeBtn").onclick=function(){
+  var root=document.documentElement, cur=root.getAttribute("data-theme");
+  var dark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;
+  root.setAttribute("data-theme",dark?"light":"dark");
+};
+})();
+</script>
+</body>
+</html>

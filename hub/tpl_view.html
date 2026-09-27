@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>성경 이야기 교재</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1e7;--paper:#fffdf8;--ink:#2a251d;--muted:#7a7061;--line:#e6dccb;--accent:#a8741a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;--accent:#e2b457}}
+:root[data-theme="dark"]{--bg:#12110f;--paper:#1c1a17;--ink:#eee7da;--muted:#a79f90;--line:#322e27;--accent:#e2b457}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif}
+nav{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--line);min-height:52px}
+nav a,nav button{font:inherit;font-size:14px;color:var(--ink);text-decoration:none;background:none;border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+nav a:hover,nav button:hover{border-color:var(--accent)}
+nav button:disabled{opacity:.35;cursor:default}
+.ttl{flex:1;min-width:0;text-align:center;overflow:hidden}
+.ttl b{font-family:"Gowun Batang",serif;font-size:17px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl small{color:var(--muted);font-size:12px}
+.no{color:var(--accent);font-weight:900;margin-right:6px;font-family:"Noto Sans KR"}
+iframe{flex:1;width:100%;border:0;background:var(--bg)}
+@media (max-width:560px){.lbl{display:none}.ttl small{display:none}}
+</style>
+</head>
+<body>
+<nav>
+  <a id="list" href="./">☰ <span class="lbl">목록</span></a>
+  <button id="prev" type="button" aria-label="이전 이야기">◀ <span class="lbl">이전</span></button>
+  <div class="ttl"><b id="title"></b><small id="sub"></small></div>
+  <button id="next" type="button" aria-label="다음 이야기"><span class="lbl">다음</span> ▶</button>
+</nav>
+<iframe id="frame" title="성경 이야기 시뮬레이션" allow="fullscreen; autoplay"></iframe>
+<script>
+const DATA = /*__CATALOG__*/[];
+const P = new URLSearchParams(location.search);
+const embed = P.get('embed') === '1';
+if (P.get('theme')) document.documentElement.dataset.theme = P.get('theme');
+if (embed) document.getElementById('list').href = './?embed=1';
+if (P.get('nav') === '0') document.querySelector('nav').style.display = 'none';
+const byNo = new Map(DATA.map(d => [d.no, d]));
+const pad = n => String(n).padStart(3, '0');
+let cur = Math.min(Math.max(parseInt(P.get('n') || '1', 10) || 1, 1), DATA.length);
+function go(n, push) {
+  const d = byNo.get(n); if (!d) return;
+  cur = n;
+  document.getElementById('frame').src = `s/${pad(n)}.html`;
+  document.getElementById('title').innerHTML = `<span class="no">#${pad(n)}</span>` + d.title.replace(/</g, '&lt;');
+  document.getElementById('sub').textContent = `${d.testament} · ${d.book} · ${d.ref}`;
+  document.title = `${pad(n)} ${d.title} · 성경 이야기 교재`;
+  document.getElementById('prev').disabled = !byNo.has(n - 1);
+  document.getElementById('next').disabled = !byNo.has(n + 1);
+  const u = new URL(location.href); u.searchParams.set('n', n);
+  history[push ? 'pushState' : 'replaceState']({ n }, '', u);
+  try { parent !== window && parent.postMessage({ type: 'bible-sim:open', no: n, title: d.title }, '*'); } catch (e) {}
+}
+document.getElementById('prev').onclick = () => go(cur - 1, true);
+document.getElementById('next').onclick = () => go(cur + 1, true);
+addEventListener('popstate', e => e.state && go(e.state.n, false));
+go(cur, false);
+</script>
+</body>
+</html>
