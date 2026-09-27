@@ -6,14 +6,14 @@ Next.js 14 (App Router) · Supabase · Vercel · Tailwind CSS · shadcn/ui — �
 ## 핵심 원칙
 1. **교재 HTML은 허브 저장소에 넣지 않는다.** 교재는 bible-sim 사이트에만 있고, 허브는 iframe으로 불러온다.
 2. 교재 주소는 환경변수 하나로 관리한다: `NEXT_PUBLIC_BIBLE_SIM_URL=https://<bible-sim 배포 주소>` (공개값이라 NEXT_PUBLIC 사용 가능. API 키는 절대 NEXT_PUBLIC 금지)
-3. 교재 URL 규칙: `${BIBLE_SIM_URL}/s/${String(no).padStart(3,'0')}.html`
+3. 교재 URL 규칙: `${BIBLE_SIM_URL}/s/${String(no).padStart(3,"0")}`
 4. **새 표는 만들자마자 RLS를 켜고 정책을 쓴다.** 정책 없는 표는 배포 금지.
 5. 목록 데이터는 Supabase `edu.bible_simulations`에서 읽는다. catalog.json을 런타임에 직접 fetch하지 않는다 (시드 원본 용도).
 
 ## iframe 사용법
 ```tsx
 <iframe
-  src={`${process.env.NEXT_PUBLIC_BIBLE_SIM_URL}/s/${pad(no)}.html`}
+  src={`${process.env.NEXT_PUBLIC_BIBLE_SIM_URL}/s/${pad(no)}`}
   title={`${no}. ${title}`}
   allow="fullscreen; autoplay"
   className="w-full h-[calc(100dvh-56px)] border-0"

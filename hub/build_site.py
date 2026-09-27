@@ -43,7 +43,7 @@ for f in sorted(glob.glob(f"{SRC}/[0-9][0-9][0-9]_*.html")):
         "question": d["q"],
         "audience": [AUD[a] for a in d["a"] if a in AUD],
         "style": "v2" if n >= V2_FROM else "v1",
-        "path": f"/s/{n:03d}.html",
+        "path": f"/s/{n:03d}",
         "source_file": base,
         "bytes": os.path.getsize(f),
     })

@@ -12,7 +12,7 @@
 ## 3. 구조
 ```
 [bible-sim 정적 사이트 · Vercel]            [이음허브 · Next.js 14 + Supabase]
-  /s/001.html … /s/512.html  (교재 원본)  ←iframe─  /edu/bible          목록·검색·필터
+  /s/001 … /s/512  (교재 원본)  ←iframe─  /edu/bible          목록·검색·필터
   /view?n=94   (이전/다음 보기 화면)       ←iframe─  /edu/bible/[no]     교재 보기
   /catalog.json (512편 목록)               ─seed→    edu.bible_simulations (Supabase 표)
 ```
@@ -35,7 +35,7 @@
    - 카드: 번호·구약/신약·성경책·참조 구절·제목·요약 2줄
 2. **교재 보기** `/edu/bible/[no]`
    - 상단: 번호·제목·참조 구절, 이전/다음, 목록으로
-   - 본문: `iframe src = {BIBLE_SIM_URL}/s/{NNN}.html`
+   - 본문: `iframe src = {BIBLE_SIM_URL}/s/{NNN}`
    - 아래 접이식 패널: 요약, 의미, 나눔 질문 (DB 값)
 3. 이음허브 메뉴에 "성경 이야기 교재" 추가
 

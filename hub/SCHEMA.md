@@ -22,7 +22,7 @@ create table edu.bible_simulations (
   question    text not null,            -- 나눔 질문
   audience    text[] not null default '{}',  -- 어린이/청소년/성인
   style       text not null default 'v1' check (style in ('v1','v2')),
-  path        text not null,            -- bible-sim 사이트 안 경로 (/s/094.html)
+  path        text not null,            -- bible-sim 사이트 안 경로 (/s/094)
   is_published boolean not null default true,
   updated_at  timestamptz not null default now()
 );

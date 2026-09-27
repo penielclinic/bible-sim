@@ -47,7 +47,7 @@ let cur = Math.min(Math.max(parseInt(P.get('n') || '1', 10) || 1, 1), DATA.lengt
 function go(n, push) {
   const d = byNo.get(n); if (!d) return;
   cur = n;
-  document.getElementById('frame').src = `s/${pad(n)}.html`;
+  document.getElementById('frame').src = `s/${pad(n)}`;
   document.getElementById('title').innerHTML = `<span class="no">#${pad(n)}</span>` + d.title.replace(/</g, '&lt;');
   document.getElementById('sub').textContent = `${d.testament} · ${d.book} · ${d.ref}`;
   document.title = `${pad(n)} ${d.title} · 성경 이야기 교재`;
